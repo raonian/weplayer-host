@@ -1,0 +1,4 @@
+node_modules/
+build/
+test/
+.DS_store

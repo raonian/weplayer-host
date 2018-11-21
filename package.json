@@ -1,0 +1,28 @@
+{
+  "name": "weplayer-host",
+  "version": "1.0.0",
+  "description": "html5 video live server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raonian/weplayer-host.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/raonian/weplayer-host/issues"
+  },
+  "homepage": "https://github.com/raonian/weplayer-host#readme",
+  "dependencies": {
+    "babel": "^6.23.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-register": "^6.26.0",
+    "koa": "^2.6.2",
+    "koa-route": "^3.2.0",
+    "koa-sslify": "^2.1.2",
+    "koa-static": "^5.0.0"
+  }
+}
