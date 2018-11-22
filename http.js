@@ -20,7 +20,17 @@ async function main(ctx) {
     ctx.response.type = 'html';
     ctx.response.body = await fs.createReadStream('./src/index.html');
 }
+async function view(ctx) {
+    ctx.response.type = 'html';
+    ctx.response.body = await fs.createReadStream('./src/view.html');
+}
+async function statics(ctx) {
+    ctx.response.body = await fs.createReadStream(path.join(__dirname, ctx.url));
+}
+
 app.use(route.get('/', main));
+app.use(route.get('/view', view));
+app.use(route.get('/node_modules/*', statics));
 
 // app.listen(port);
 const options = {
@@ -32,22 +42,20 @@ const server = https.createServer(options, app.callback()).listen(port);
 
 
 import ws from 'ws';
-var WebSoket = ws.Server;
+const WebSoket = ws.Server;
 
-var wss = new WebSoket({server});
+const wss = new WebSoket({server});
+const room = {};
 wss.on('connection', function connection(ws){
     ws.on('message', function incoming(message) {
-        console.log(message);
+        const msg = message.match(/type=(.+),(.+)/) || [];
+        // console.log(msg);
+        if(msg[1] === 'offer') {
+            room.offer = message;
+        } else if(msg[1] === 'answer') {
+            ws.send(room.offer);
+        }
+        // ws.send(message);
     });
-    ws.send('connection');
-    // var rs = fs.createReadStream('./oceans.mp4');
-    // var data = '';
-    // rs.on('data', function(d) {
-    //     ws.send(new Buffer(d));
-    // });
-    // rs.on('end', function(){
-    //     ws.send('end');
-    //     ws.close();
-    // });
-
+    ws.send('ws-connected');
 });

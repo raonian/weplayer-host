@@ -2,10 +2,19 @@
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>host</title>
     <style>
         
     </style>
+    <script>
+        (function () {
+            var src = 'node_modules/eruda/eruda.min.js';
+            if (!/eruda=true/.test(window.location) && localStorage.getItem('active-eruda') != 'true') return;
+            document.write('<scr' + 'ipt src="' + src + '"></scr' + 'ipt>');
+            document.write('<scr' + 'ipt>eruda.init();</scr' + 'ipt>');
+        })();
+    </script>
 </head>
 
 <body>
@@ -13,19 +22,41 @@
         <video id="my-video" controls></video>
     </div>
     <script>
-        const ws = new WebSocket('wss://192.168.96.106:8080');
-        ws.onmessage = function(event) {
-            alert(event.data);
-            ws.send('client connected');
+        const ws = new WebSocket('wss://192.168.96.115:8080');
+
+        const ice = {
+            'iceServers': [
+                {'url': 'stun:stun.l.google.com:19302'}
+            ]
         };
+
+        const pc = new RTCPeerConnection(ice);
+        ws.onmessage = function(event) {
+            if(event.data === 'ws-connected') {
+                pc.createOffer(function(offer) {
+                    pc.setLocalDescription(offer);
+                    ws.send('type=offer,' + offer.sdp);
+                }, function(e) {
+                    console.log('did not get offer', e);
+                });
+            }
+        };
+        
 
         const opt = {video: true, audio: true};
         function onSuccess(stream) {
-            alert('stream');
-            ws.send(stream);
+            pc.addStream(stream);
         }
+        pc.onicecandidate = function(evt) {
+            console.log('onicecandidate', evt);
+            ws.send(evt.candidate);
+        }
+        // ws.onmessage = function(msg) {
+        //     console.log('msg', msg);
+        //     pc.addIceCandidate(msg.candidate);
+        // }
         function onError(e) {
-            alert(e);
+            console.log(e);
         }
         navigator.getUserMedia(opt, onSuccess, onError);
 
