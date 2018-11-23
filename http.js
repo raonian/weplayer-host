@@ -22,6 +22,16 @@ async function main(ctx) {
 }
 async function view(ctx) {
     ctx.response.type = 'html';
+
+    // hsts
+    // ctx.response.set('strict-transport-security', 'max-age=15552000; includeSubDomains');
+    // if(!ctx.request.header.host.match(':')) {
+    //     ctx.response.status = 307;
+    //     ctx.response.set('location', 'https://192.168.96.122:8080/view');
+    //     ctx.response.set('Non-Authoritative-Reason', 'HSTS');
+    //     return;
+    // }
+
     ctx.response.body = await fs.createReadStream('./src/view.html');
 }
 async function statics(ctx) {
@@ -39,23 +49,22 @@ const options = {
 };
 
 const server = https.createServer(options, app.callback()).listen(port);
-
+// app.listen(80); // test hsts
 
 import ws from 'ws';
 const WebSoket = ws.Server;
 
 const wss = new WebSoket({server});
 const room = {};
-wss.on('connection', function connection(ws){
-    ws.on('message', function incoming(message) {
-        const msg = message.match(/type=(.+),(.+)/) || [];
-        // console.log(msg);
-        if(msg[1] === 'offer') {
-            room.offer = message;
-        } else if(msg[1] === 'answer') {
-            ws.send(room.offer);
-        }
-        // ws.send(message);
+
+function sendAll(data) {
+    wss.clients.forEach(function(client) {
+        client.send(data);
     });
-    ws.send('ws-connected');
+}
+wss.on('connection', function connection(ws){ // 信令服务器，交换客户端之间的网络信息
+    ws.on('message', function incoming(message) {
+        sendAll(message);
+    });
+    ws.send(JSON.stringify({type: 'status', msg: 'connected'}));
 });

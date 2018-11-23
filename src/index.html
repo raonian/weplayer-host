@@ -19,46 +19,55 @@
 
 <body>
     <div>
-        <video id="my-video" controls></video>
+        <button id="start">开始</button>
     </div>
     <script>
-        const ws = new WebSocket('wss://192.168.96.115:8080');
+        // 1.链接信令服务器--主播端
+        const ws = new WebSocket('wss://192.168.96.122:8080');
 
         const ice = {
             'iceServers': [
-                {'url': 'stun:stun.l.google.com:19302'}
+                // {'url': 'stun:stun.l.google.com:19302'}
             ]
         };
+        const opt = {video: true, audio: true};
 
         const pc = new RTCPeerConnection(ice);
         ws.onmessage = function(event) {
-            if(event.data === 'ws-connected') {
-                pc.createOffer(function(offer) {
-                    pc.setLocalDescription(offer);
-                    ws.send('type=offer,' + offer.sdp);
-                }, function(e) {
-                    console.log('did not get offer', e);
-                });
+            const data = JSON.parse(event.data);
+            
+            if(data.type === 'answer') { // 交换到访客端的answer对象
+                pc.setRemoteDescription(new RTCSessionDescription(data));
             }
         };
         
-
-        const opt = {video: true, audio: true};
+        // 2.获取摄像头和麦克风数据成功时，添加到通信通道
+        // 并获取本地offer（确定本地媒体条件,如分辨率,编解码能力）
+        // 存放本地描述信息(setLocalDescription)，并通过信令服务器发送给访客端
         function onSuccess(stream) {
             pc.addStream(stream);
+
+            pc.createOffer(function(offer) {
+                pc.setLocalDescription(offer);
+                ws.send(JSON.stringify(offer));
+            }, function(e) {
+                console.log('did not get offer----------', e);
+            });
         }
+
+        // 3.当candidates创建时（获取到应用程序所在机器的网络地址），并通过信令服务器发送给访客端
         pc.onicecandidate = function(evt) {
-            console.log('onicecandidate', evt);
-            ws.send(evt.candidate);
+            console.log('onicecandidate', evt.candidate);
+            if(evt.candidate) {
+                ws.send(JSON.stringify(evt.candidate));
+            }
         }
-        // ws.onmessage = function(msg) {
-        //     console.log('msg', msg);
-        //     pc.addIceCandidate(msg.candidate);
-        // }
         function onError(e) {
-            console.log(e);
+            console.log('get user media fail----------', e);
         }
-        navigator.getUserMedia(opt, onSuccess, onError);
+        document.getElementById('start').onclick = function(e) {
+            navigator.getUserMedia(opt, onSuccess, onError);
+        }
 
     </script>
 </body>
