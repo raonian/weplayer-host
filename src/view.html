@@ -15,7 +15,7 @@
     </div>
     <script>
         // 1.链接信令服务器--访客端
-        const ws = new WebSocket('wss://192.168.96.122:8080');
+        const ws = new WebSocket('wss://192.168.96.149:443');
         
         const ice = {
             'iceServers': [
@@ -28,7 +28,7 @@
         ws.onmessage = function(event) {
             pc = new RTCPeerConnection(ice);
             const data = JSON.parse(event.data);
-            // console.log(data);
+            console.log(data);
             if(data.type === 'offer') {
                 // 2.获取到主播offer对象，并创建answer对象以作交换
                 pc.setRemoteDescription(new RTCSessionDescription(data));
@@ -41,9 +41,17 @@
             }
 
             // 3.接收到主播端candidate对象，添加到远端描述。至此，端到端链接完成
-            if(data.candidate) {
-                pc.addIceCandidate(new RTCIceCandidate(data));
+            // if(data.candidate) {
+            //     pc.addIceCandidate(new RTCIceCandidate(data));
+            // }
+
+            pc.onicecandidate = function(evt) {
+                console.log('onicecandidate', evt.candidate);
+                if(evt.candidate) {
+                    ws.send(JSON.stringify(evt.candidate));
+                }
             }
+
             // 4.接收到流媒体数据，放入video播放器播放
             pc.onaddstream = function(evt) {
                 // document.getElementById('my-video').src = window.URL.createObjectURL(evt.stream);

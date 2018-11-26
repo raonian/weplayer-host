@@ -23,7 +23,7 @@
     </div>
     <script>
         // 1.链接信令服务器--主播端
-        const ws = new WebSocket('wss://192.168.96.122:8080');
+        const ws = new WebSocket('wss://192.168.96.149:443');
 
         const ice = {
             'iceServers': [
@@ -35,9 +35,13 @@
         const pc = new RTCPeerConnection(ice);
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            
+            console.log(data);
             if(data.type === 'answer') { // 交换到访客端的answer对象
                 pc.setRemoteDescription(new RTCSessionDescription(data));
+            }
+
+            if(data.candidate) {
+                pc.addIceCandidate(new RTCIceCandidate(data));
             }
         };
         
@@ -56,12 +60,13 @@
         }
 
         // 3.当candidates创建时（获取到应用程序所在机器的网络地址），并通过信令服务器发送给访客端
-        pc.onicecandidate = function(evt) {
-            console.log('onicecandidate', evt.candidate);
-            if(evt.candidate) {
-                ws.send(JSON.stringify(evt.candidate));
-            }
-        }
+        // pc.onicecandidate = function(evt) {
+        //     console.log('onicecandidate', evt.candidate);
+        //     if(evt.candidate) {
+        //         ws.send(JSON.stringify(evt.candidate));
+        //     }
+        // }
+        
         function onError(e) {
             console.log('get user media fail----------', e);
         }

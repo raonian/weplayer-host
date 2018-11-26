@@ -7,7 +7,7 @@ import route from 'koa-route';
 // import statics from 'koa-static';
 const app = new Koa();
 
-const port = 8080;
+const port = 443;
 
 // console.log('static', path.join(__dirname, './src/static'));
 // console.log('set port:' + process.env.PORT + '; ip:' + process.env.IP);
@@ -64,7 +64,14 @@ function sendAll(data) {
 }
 wss.on('connection', function connection(ws){ // 信令服务器，交换客户端之间的网络信息
     ws.on('message', function incoming(message) {
+        const data = JSON.parse(message);
+        if(data.type === 'offer') {
+            room.offer = message;
+            return;
+        }
         sendAll(message);
     });
-    ws.send(JSON.stringify({type: 'status', msg: 'connected'}));
+    if(room.offer) {
+        ws.send(room.offer);
+    }
 });
