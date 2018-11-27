@@ -7,7 +7,7 @@ import route from 'koa-route';
 // import statics from 'koa-static';
 const app = new Koa();
 
-const port = 8080;
+const port = 443;
 
 // console.log('static', path.join(__dirname, './src/static'));
 // console.log('set port:' + process.env.PORT + '; ip:' + process.env.IP);

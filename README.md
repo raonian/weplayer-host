@@ -21,6 +21,9 @@
 ![blockchain](https://segmentfault.com/img/bVV0KG?w=962&h=826 "RTCPeerConnection")
 
 
+## 参考资料
+*《Web性能权威指南》-- Ilya Grigorik*
+
 ---
 ### 查看demo
 ```
