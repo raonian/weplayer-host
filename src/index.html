@@ -20,34 +20,29 @@
 <body>
     <div>
         <button id="start">开始</button>
+        <!-- <video id="my-video" controls></video> -->
     </div>
     <script>
         // 1.链接信令服务器--主播端
-        const ws = new WebSocket('wss://192.168.96.149:443');
+        const ws = new WebSocket('wss://192.168.104.152:8080');
 
+        // stun: 谷歌公共测试服务器，以收集ice候选项
         const ice = {
             'iceServers': [
                 // {'url': 'stun:stun.l.google.com:19302'}
+                //{'url': 'turn:user@turnserver.com', 'credential': 'pass'}
             ]
         };
+
+        // 配置本地音视频数据参数，如：比特率，视频尺寸等
         const opt = {video: true, audio: true};
 
+        // 2.创建RTCPeerConnection对象
         const pc = new RTCPeerConnection(ice);
-        ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            console.log(data);
-            if(data.type === 'answer') { // 交换到访客端的answer对象
-                pc.setRemoteDescription(new RTCSessionDescription(data));
-            }
-
-            if(data.candidate) {
-                pc.addIceCandidate(new RTCIceCandidate(data));
-            }
-        };
         
-        // 2.获取摄像头和麦克风数据成功时，添加到通信通道
-        // 并获取本地offer（确定本地媒体条件,如分辨率,编解码能力）
-        // 存放本地描述信息(setLocalDescription)，并通过信令服务器发送给访客端
+        // 3.获取摄像头和麦克风数据成功时，注册本地音视频流
+        // 并创建端到端的sdp提议描述--offer（本地媒体条件,如分辨率,编解码器）
+        // 生成本地描述信息(setLocalDescription)，并通过信令服务器发送给访客端
         function onSuccess(stream) {
             pc.addStream(stream);
 
@@ -57,16 +52,7 @@
             }, function(e) {
                 console.log('did not get offer----------', e);
             });
-        }
-
-        // 3.当candidates创建时（获取到应用程序所在机器的网络地址），并通过信令服务器发送给访客端
-        // pc.onicecandidate = function(evt) {
-        //     console.log('onicecandidate', evt.candidate);
-        //     if(evt.candidate) {
-        //         ws.send(JSON.stringify(evt.candidate));
-        //     }
-        // }
-        
+        }  
         function onError(e) {
             console.log('get user media fail----------', e);
         }
@@ -74,6 +60,18 @@
             navigator.getUserMedia(opt, onSuccess, onError);
         }
 
+        // 4.监听信令服务器推送过来的远程应答描述，以及ice候选项(远端ip地址)
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if(data.type === 'answer') { // 交换到访客端的answer对象
+                pc.setRemoteDescription(new RTCSessionDescription(data));
+            }
+
+            // 获取到远程网络地址，并建立端到端连接，即可向对方发送数据
+            if(data.candidate) {
+                pc.addIceCandidate(new RTCIceCandidate(data));
+            }
+        };
     </script>
 </body>
 </html>
