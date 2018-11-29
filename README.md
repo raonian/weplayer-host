@@ -25,7 +25,7 @@
 *《Web性能权威指南》-- Ilya Grigorik*
 
 ---
-### 查看demo
+### 查看demo
 ```
 npm install
 npm run start
